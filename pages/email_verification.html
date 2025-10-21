@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Verify Email - School Management System</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 500px;
+            margin: 50px auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .success { color: #28a745; }
+        .error { color: #dc3545; }
+        .loading { color: #007bff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Email Verification</h1>
+        <div id="message">
+            <p class="loading">Verifying your email address...</p>
+        </div>
+    </div>
+
+    <script>
+        async function verifyEmail() {
+            const messageDiv = document.getElementById('message');
+            
+            try {
+                // Get token from URL
+                const pathParts = window.location.pathname.split('/');
+                const token = pathParts[pathParts.length - 2]; // Get token from /verify-email/{token}/
+                
+                if (!token) {
+                    throw new Error('No verification token found in URL');
+                }
+
+                // Send token to backend
+                const response = await fetch('/api/auth/verify-email/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ token: token })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    messageDiv.innerHTML = `
+                        <p class="success">✅ ${data.message}</p>
+                        <p>You can now <a href="/login">login to your account</a>.</p>
+                    `;
+                } else {
+                    messageDiv.innerHTML = `
+                        <p class="error">❌ ${data.error}</p>
+                        <p>Please try registering again or contact support.</p>
+                    `;
+                }
+            } catch (error) {
+                messageDiv.innerHTML = `
+                    <p class="error">❌ Verification failed: ${error.message}</p>
+                    <p>Please try again or contact support.</p>
+                `;
+            }
+        }
+
+        // Start verification when page loads
+        document.addEventListener('DOMContentLoaded', verifyEmail);
+    </script>
+</body>
+</html>

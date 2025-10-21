@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+
+{% block content %}
+ <div class="container text-center mt-5">
+        <h1 class="display-4 text-primary">
+            <i class="fas fa-graduation-cap me-2"></i>
+            School Management System
+        </h1>
+        <p class="lead">Welcome to the multi-tenant school management platform</p>
+        
+        <div class="row mt-5">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h3>School Owner</h3>
+                        <p>Register and manage your school</p>
+                        <a href="register.html" class="btn btn-primary me-2">Register School</a>
+                        <a href="login.html" class="btn btn-outline-primary">Login</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-body">
+                        <h3>Super Admin</h3>
+                        <p>Manage the entire system</p>
+                        <a href="http://127.0.0.1:8000/admin/" class="btn btn-success me-2">Admin Panel</a>
+                        <a href="login.html" class="btn btn-outline-success">API Login</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+

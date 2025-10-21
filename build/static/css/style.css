@@ -1,0 +1,34 @@
+.auth-container 
+{
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+.auth-card 
+{
+    background: white;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+.dashboard-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+.stat-card {
+    transition: transform 0.2s;
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+.stat-card:hover 
+{
+    transform: translateY(-5px);
+}
+
+.sidebar {
+    background: #f8f9fa;
+    min-height: calc(100vh - 56px);
+    border-right: 1px solid #dee2e6;
+}
+
+
+       

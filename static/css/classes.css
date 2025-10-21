@@ -1,0 +1,27 @@
+#contentContainer > div {
+    display: none;
+}
+
+#contentContainer > div:not(.d-none) {
+    display: block !important;
+}
+
+#classesContent:not(.d-none) {
+    display: block !important;
+}
+
+#addClassContent:not(.d-none) {
+    display: block !important;
+}
+
+#addClassContent .card {
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+#addClassContent .card-body,
+#addClassForm {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}

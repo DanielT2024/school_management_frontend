@@ -1,0 +1,417 @@
+<!-- frontend/base.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - School Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="static/css/classes.css">
+    <link rel="stylesheet" href="static/css/style.css">
+
+   
+</head>
+<body>
+    
+<!-- Navigation -->
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+    <div class="container-fluid">
+        <a class="navbar-brand fw-bold" href="#" id="navDashboardLink">
+            <i class="fas fa-graduation-cap me-2"></i>
+            School Management System
+        </a>
+        <div class="navbar-nav ms-auto">
+            <div class="nav-item dropdown">
+                <a class="nav-link dropdown-toggle text-white" href="#" role="button" data-bs-toggle="dropdown">
+                    <i class="fas fa-user-circle me-1"></i>
+                    <span id="userName">User</span>
+                </a>
+                <ul class="dropdown-menu dropdown-menu-end">
+                    <li><a class="dropdown-item" href="#" id="settingsLink">
+                        <i class="fas fa-cog me-2"></i>Settings
+                    </a></li>
+                    <li><hr class="dropdown-divider"></li>
+                    <li><a class="dropdown-item" href="#" id="logoutLink">
+                        <i class="fas fa-sign-out-alt me-2"></i>Logout
+                    </a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<!-- Main Content -->
+<div class="container-fluid">
+    <div class="row">
+        <!-- Sidebar -->
+        <div class="col-md-3 col-lg-2 sidebar d-md-block">
+            <div class="position-sticky pt-3">
+                <ul class="nav flex-column" id="sidebarMenu">
+                    <!-- Menu populated by JavaScript -->
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <main class="col-md-9 col-lg-10 ms-sm-auto px-md-4 main-content">
+            <!-- Dashboard Header -->
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom" id="dashboardHeader">
+                <h1 id="dashboardTitle" class="h2">Dashboard</h1>
+                <div class="btn-toolbar mb-2 mb-md-0">
+                    <div class="btn-group me-2">
+                        <button type="button" class="btn btn-sm btn-outline-secondary" id="refreshBtn">
+                            <i class="fas fa-sync-alt me-1"></i>Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page Header -->
+            <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom d-none" id="pageHeader">
+                <div>
+                    <button class="btn btn-sm btn-outline-secondary me-2" id="backToDashboardBtn">
+                        <i class="fas fa-arrow-left me-1"></i>Back to Dashboard
+                    </button>
+                    <h1 id="pageTitle" class="h2 mb-0"></h1>
+                </div>
+                <div id="pageActions">
+                    <!-- Action buttons -->
+                </div>
+            </div>
+
+            <!-- Content Container -->
+            <div id="contentContainer">
+                <!-- Dashboard Content -->
+                <div id="dashboardContent">
+                    <!-- Stats Cards -->
+                    <div class="row" id="statsContainer">
+                        <!-- Stats will be loaded here -->
+                    </div>
+                    <!-- Recent Activity -->
+                    <div class="row mt-4">
+                        <div class="col-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="card-title mb-0">Recent Activity</h5>
+                                </div>
+                                <div class="card-body">
+                                    <div id="recentActivity">
+                                        Loading...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Students Management -->
+                <div id="studentsContent" class="d-none">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Student Management</h5>
+                            <button class="btn btn-primary btn-sm" id="addStudentBtn">
+                                <i class="fas fa-plus me-1"></i>Add Student
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="studentsList">
+                                Loading students...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Student Form -->
+                <div id="addStudentContent" class="d-none">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Add New Student</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="addStudentForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="studentFirstName" class="form-label">First Name *</label>
+                                            <input type="text" class="form-control" id="studentFirstName" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="studentLastName" class="form-label">Last Name *</label>
+                                            <input type="text" class="form-control" id="studentLastName" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="studentEmail" class="form-label">Email *</label>
+                                            <input type="email" class="form-control" id="studentEmail" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="studentPhone" class="form-label">Phone</label>
+                                            <input type="tel" class="form-control" id="studentPhone">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="studentDob" class="form-label">Date of Birth *</label>
+                                            <input type="date" class="form-control" id="studentDob" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="mb-3">
+                                            <label for="studentGender" class="form-label">Gender *</label>
+                                            <select class="form-select" id="studentGender" required>
+                                                <option value="">Select Gender</option>
+                                                <option value="male">Male</option>
+                                                <option value="female">Female</option>
+                                                <option value="other">Other</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="studentAddress" class="form-label">Address</label>
+                                    <textarea class="form-control" id="studentAddress" rows="3"></textarea>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i>Register Student
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" id="cancelAddStudentBtn">
+                                        <i class="fas fa-times me-1"></i>Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Teachers Management -->
+                <div id="teachersContent" class="d-none">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Teacher Management</h5>
+                            <button class="btn btn-primary btn-sm" id="addTeacherBtn">
+                                <i class="fas fa-plus me-1"></i>Add Teacher
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="teachersList">
+                                Loading teachers...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Add Teacher Form -->
+                <div id="addTeacherContent" class="d-none">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Add New Teacher</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="addTeacherForm">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="teacherFirstName" class="form-label">First Name *</label>
+                                            <input type="text" class="form-control" id="teacherFirstName" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="teacherLastName" class="form-label">Last Name *</label>
+                                            <input type="text" class="form-control" id="teacherLastName" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="teacherEmail" class="form-label">Email *</label>
+                                            <input type="email" class="form-control" id="teacherEmail" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="teacherPhone" class="form-label">Phone *</label>
+                                            <input type="tel" class="form-control" id="teacherPhone" required>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="teacherSubject" class="form-label">Subject *</label>
+                                            <input type="text" class="form-control" id="teacherSubject" required>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label for="teacherSalary" class="form-label">Salary</label>
+                                            <input type="number" class="form-control" id="teacherSalary" step="0.01">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-2">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="fas fa-save me-1"></i>Register Teacher
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" id="cancelAddTeacherBtn">
+                                        <i class="fas fa-times me-1"></i>Cancel
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Classes Management -->
+                <div id="classesContent" class="d-none">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Class Management</h5>
+                            <button class="btn btn-primary btn-sm" id="addClassBtn">
+                                <i class="fas fa-plus me-1"></i>Add Class
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="classesList">
+                                Loading classes...
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Add Class Form -->
+                    <div id="addClassContent" class="d-none">
+                        <div class="card">
+                            <div class="card-header">
+    
+                                <h5 class="card-title mb-0">Add New Class</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="addClassForm">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="className" class="form-label">Class Name *</label>
+                                                <input type="text" class="form-control" id="className" required 
+                                                       placeholder="e.g., Grade 10 Mathematics">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="classCode" class="form-label">Class Code *</label>
+                                                <input type="text" class="form-control" id="classCode" required 
+                                                       placeholder="e.g., MATH10">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="classTeacher" class="form-label">Teacher</label>
+                                                <select class="form-select" id="classTeacher">
+                                                    <option value="">Select Teacher</option>
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <div class="mb-3">
+                                                <label for="classCapacity" class="form-label">Capacity *</label>
+                                                <input type="number" class="form-control" id="classCapacity" 
+                                                       value="30" min="1" max="100" required>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="d-flex gap-2">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-save me-1"></i>Create Class
+                                        </button>
+                                        <button type="button" class="btn btn-secondary" id="cancelAddClassBtn">
+                                            <i class="fas fa-times me-1"></i>Cancel
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Settings Page -->
+                <div id="settingsContent" class="d-none">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Settings</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <h6>Profile Settings</h6>
+                                    <form id="profileForm">
+                                        <div class="mb-3">
+                                            <label for="profileFirstName" class="form-label">First Name</label>
+                                            <input type="text" class="form-control" id="profileFirstName">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="profileLastName" class="form-label">Last Name</label>
+                                            <input type="text" class="form-control" id="profileLastName">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="profileEmail" class="form-label">Email</label>
+                                            <input type="email" class="form-control" id="profileEmail" readonly>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                                    </form>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Change Password</h6>
+                                    <form id="passwordForm">
+                                        <div class="mb-3">
+                                            <label for="currentPassword" class="form-label">Current Password</label>
+                                            <input type="password" class="form-control" id="currentPassword">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="newPassword" class="form-label">New Password</label>
+                                            <input type="password" class="form-control" id="newPassword">
+                                        </div>
+                                        <div class="mb-3">
+                                            <label for="confirmPassword" class="form-label">Confirm Password</label>
+                                            <input type="password" class="form-control" id="confirmPassword">
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Change Password</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+
+    
+    
+   
+
+    <script src="static/js/utils.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+   
+    
+
+    
+<script src="../static/js/utils.js"></script>
+<script src="../static/js/dashboard.js"></script>
+
+</body>
+</html>
