@@ -1,0 +1,31 @@
+name: 🚀 Deploy to Vercel on main push
+
+on:
+  push:
+    branches:
+      - main  # or whatever your production branch is
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: 🏗️ Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: ⚙️ Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: 🧰 Build project
+        run: python build.py  # your custom build step (adjust as needed)
+
+      - name: 🚀 Deploy to Vercel
+        run: vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          # VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
