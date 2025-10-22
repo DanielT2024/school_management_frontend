@@ -9,27 +9,20 @@ if (typeof axios === "undefined") {
  */
 window.schoolUtils = {
     // ==================== BASE CONFIG ====================
-    API_BASE: (() => {
-        // 1️⃣ Priority: use environment variable (for Vercel/Next.js builds)
-        if (typeof process !== "undefined" &&
-            process.env &&
-            process.env.NEXT_PUBLIC_API_URL) {
-            return process.env.NEXT_PUBLIC_API_URL;
-        }
+    API_BASE:
+        // ✅ Runtime detection first
+        window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
+            ? "http://127.0.0.1:8000"
+            : (window.location.origin.includes("vercel.app") ||
+               window.location.origin.includes("yourdomain.com"))
+                ? "https://school-management-backend-production.up.railway.app"
+                : (typeof process !== "undefined" &&
+                   process.env &&
+                   process.env.NEXT_PUBLIC_API_URL)
+                    ? process.env.NEXT_PUBLIC_API_URL
+                    : "https://school-management-backend-production.up.railway.app",
 
-        // 2️⃣ Development: running on localhost or 127.0.0.1
-        if (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") {
-            return "http://127.0.0.1:8000";
-        }
-
-        // 3️⃣ Production: deployed version
-        return "https://school-management-backend-production.up.railway.app";
-    })(),
-
-    // ==================== AXIOS SETUP ====================
     initializeAxiosInterceptors() {
-        if (typeof axios === "undefined") return;
-
         axios.interceptors.response.use(
             response => response,
             error => {
@@ -41,7 +34,8 @@ window.schoolUtils = {
                 return Promise.reject(error);
             }
         );
-    },
+    },  
+    
 
     // ==================== AUTH HELPERS ====================
     getToken() {
