@@ -1,37 +1,19 @@
-name: 🚀 Deploy to Vercel on main push
+name: Deploy to Vercel
 
 on:
   push:
     branches:
-      - main  # or whatever your production branch is
+      - main  # trigger only when pushing to main branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: ⬇️ Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🏗️ Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 18
-
-      - name: ⚙️ Install Vercel CLI
-        run: npm install -g vercel
-
-      - name: 🧰 Install Watchdog
+      - name: Push to Vercel
         run: |
-          python -m pip install --upgrade pip
-          pip install watchdog
-
-
-      - name: 🧰 Build project
-        run: python build.py  # your custom build step (adjust as needed)
-
-      - name: 🚀 Deploy to Vercel
-        run: vercel --prod --token=${{ secrets.VERCEL_TOKEN }}
-        env:
-          # VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+          npm install -g vercel
+          vercel --prod --yes --token=${{ secrets.VERCEL_TOKEN }}
