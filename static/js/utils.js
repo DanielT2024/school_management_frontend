@@ -1,5 +1,13 @@
 window.schoolUtils = {
-    API_BASE: "http://127.0.0.1:8000",
+    API_BASE:
+        typeof process !== "undefined" &&
+        process.env &&
+        process.env.NEXT_PUBLIC_API_URL
+            ? process.env.NEXT_PUBLIC_API_URL
+            : (window.location.hostname === "localhost" ||
+               window.location.hostname === "127.0.0.1")
+                ? "http://127.0.0.1:8000"
+                : "https://school-management-backend-production.up.railway.app",
 
     initializeAxiosInterceptors() {
         axios.interceptors.response.use(
@@ -14,7 +22,7 @@ window.schoolUtils = {
             }
         );
     },
-
+    
     getToken() {
         return localStorage.getItem("authToken");
     },
