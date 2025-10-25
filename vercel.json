@@ -6,7 +6,7 @@
     
   ],
   "env": {
-    "NEXT_PUBLIC_API_URL": "https://school-management-backend-production.up.railway.app"
+    "NEXT_PUBLIC_API_URL": "https://schoolmanagement-production-1246.up.railway.app/"
   },
   
   "routes": [
