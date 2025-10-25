@@ -15,7 +15,7 @@ window.schoolUtils = {
             ? "http://127.0.0.1:8000"
             : (window.location.origin.includes("vercel.app") ||
                window.location.origin.includes("yourdomain.com"))
-                ? "https://school-management-backend-production.up.railway.app"
+                ? "https://schoolmanagement-production-1246.up.railway.app/"
                 : (typeof process !== "undefined" &&
                    process.env &&
                    process.env.NEXT_PUBLIC_API_URL)
