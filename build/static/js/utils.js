@@ -20,7 +20,7 @@ window.schoolUtils = {
                    process.env &&
                    process.env.NEXT_PUBLIC_API_URL)
                     ? process.env.NEXT_PUBLIC_API_URL
-                    : "https://school-management-backend-production.up.railway.app",
+                    : "https://schoolmanagement-production-1246.up.railway.app/",
 
     initializeAxiosInterceptors() {
         axios.interceptors.response.use(
