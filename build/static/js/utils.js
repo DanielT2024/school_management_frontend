@@ -1,3 +1,4 @@
+// utils.js
 // ✅ Make sure axios is defined globally (for plain HTML use)
 if (typeof axios === "undefined") {
     console.error("❌ Axios is not loaded. Please include it before utils.js");
@@ -5,26 +6,58 @@ if (typeof axios === "undefined") {
 
 /**
  * Global school utilities for API interaction and common helpers.
- * Automatically switches between public and tenant domains.
- */
-
-/**
- * Global school utilities for API interaction and common helpers.
- * Simplified for separate frontend/backend architecture.
+ * Automatically switches between development and production backend.
  */
 window.schoolUtils = {
-    // ==================== SIMPLE API BASE ====================
+    // ==================== DYNAMIC API BASE ====================
     getAPI_BASE() {
-        // 🚨 ALWAYS use Django backend - no domain switching needed
-        return "http://127.0.0.1:8000";
+        // ✅ Auto-detect environment and use appropriate backend
+        const currentHost = window.location.hostname;
+        const currentOrigin = window.location.origin;
+        
+        console.log('🌐 Environment detection:', {
+            hostname: currentHost,
+            origin: currentOrigin,
+            protocol: window.location.protocol
+        });
+
+        // Production environment detection
+        const isProduction = 
+            currentOrigin.includes('vercel.app') ||
+            currentOrigin.includes('netlify.app') || 
+            currentOrigin.includes('github.io') ||
+            currentOrigin.includes('yourdomain.com') || // Add your production domain
+            currentHost !== 'localhost' && currentHost !== '127.0.0.1';
+
+        if (isProduction) {
+            console.log('🚀 Production mode: Using Railway backend');
+            return "https://schoolmanagement-production-1246.up.railway.app";
+        } else {
+            console.log('🔧 Development mode: Using local backend');
+            return "http://127.0.0.1:8000";
+        }
     },
 
-    // ==================== REMOVE DOMAIN MANAGEMENT ====================
-    // Delete all these methods:
-    // - isTenantDomain()
-    // - shouldRedirectToTenant() 
-    // - redirectToTenantDomain()
-    // - ensureTenantDomain()
+    // Add this to your utils.js after the getAPI_BASE method:
+
+    // ==================== BACKWARD COMPATIBILITY ====================
+    get API_BASE() {
+        return this.getAPI_BASE();
+    },
+
+    // ==================== ENVIRONMENT DETECTION ====================
+    isDevelopment() {
+        const hostname = window.location.hostname;
+        return hostname === 'localhost' || hostname === '127.0.0.1';
+    },
+
+    isProduction() {
+        return !this.isDevelopment();
+    },
+
+    getEnvironment() {
+        return this.isDevelopment() ? 'development' : 'production';
+    },
 
     // ==================== AUTH HELPERS ====================
     getToken() {
@@ -45,7 +78,11 @@ window.schoolUtils = {
 
     logout() {
         this.clearAuthData();
-        window.location.href = "/login.html"; // Stay on frontend domain
+        // Smart redirect based on environment
+        const loginUrl = this.isDevelopment() 
+            ? "/login.html" 
+            : window.location.origin + "/login.html";
+        window.location.href = loginUrl;
     },
 
     clearAuthData() {
@@ -53,7 +90,10 @@ window.schoolUtils = {
     },
 
     redirectToLogin() {
-        window.location.href = "/login.html";
+        const loginUrl = this.isDevelopment() 
+            ? "/login.html" 
+            : window.location.origin + "/login.html";
+        window.location.href = loginUrl;
     },
 
     getUserType() {
@@ -178,9 +218,6 @@ window.schoolUtils = {
         const token = this.getToken();
         if (token) headers["Authorization"] = `Token ${token}`;
 
-        // 🚨 Tenant schema is handled by backend - no need for X-Tenant-Schema header
-        // Your backend already knows the tenant from the user's association
-
         return headers;
     },
 
@@ -189,10 +226,10 @@ window.schoolUtils = {
             const apiBase = this.getAPI_BASE();
             const url = `${apiBase}${endpoint}`;
             
-            console.log(`🌐 API GET: ${url}`);
+            console.log(`🌐 [${this.getEnvironment().toUpperCase()}] API GET: ${url}`);
             const res = await axios.get(url, {
                 headers: this.getAuthHeaders(),
-                timeout: 10000,
+                timeout: 15000, // Increased timeout for production
             });
             console.log("✅ GET", endpoint, res.data);
             return res;
@@ -208,10 +245,10 @@ window.schoolUtils = {
             const apiBase = this.getAPI_BASE();
             const url = `${apiBase}${endpoint}`;
             
-            console.log(`🌐 API POST: ${url}`);
+            console.log(`🌐 [${this.getEnvironment().toUpperCase()}] API POST: ${url}`);
             const res = await axios.post(url, data, {
                 headers: this.getAuthHeaders(),
-                timeout: 10000,
+                timeout: 15000,
             });
             console.log("✅ POST", endpoint, res.data);
             return res;
@@ -222,13 +259,55 @@ window.schoolUtils = {
         }
     },
 
-    // ==================== SIMPLIFIED ERROR HANDLER ====================
+    async apiPut(endpoint, data) {
+        try {
+            const apiBase = this.getAPI_BASE();
+            const url = `${apiBase}${endpoint}`;
+            
+            const res = await axios.put(url, data, {
+                headers: this.getAuthHeaders(),
+                timeout: 15000,
+            });
+            console.log("✅ PUT", endpoint, res.data);
+            return res;
+        } catch (err) {
+            console.error("❌ PUT Failed:", endpoint, err.response || err);
+            this.handleApiError(err);
+            throw err;
+        }
+    },
+
+    async apiDelete(endpoint) {
+        try {
+            const apiBase = this.getAPI_BASE();
+            const url = `${apiBase}${endpoint}`;
+            
+            const res = await axios.delete(url, {
+                headers: this.getAuthHeaders(),
+                timeout: 15000,
+            });
+            console.log("✅ DELETE", endpoint, res.data);
+            return res;
+        } catch (err) {
+            console.error("❌ DELETE Failed:", endpoint, err.response || err);
+            this.handleApiError(err);
+            throw err;
+        }
+    },
+
+    // ==================== ENVIRONMENT-AWARE ERROR HANDLER ====================
     handleApiError(error) {
         const status = error.response?.status;
         const data = error.response?.data;
-        let message = error.message || "An unexpected error occurred.";
+        const environment = this.getEnvironment();
+        let message = "An unexpected error occurred.";
 
-        if (typeof data === "string") {
+        // Environment-specific messaging
+        if (environment === 'development' && status === 404) {
+            message = "Backend resource not found. Make sure your Django server is running on localhost:8000";
+        } else if (environment === 'production' && status === 404) {
+            message = "Service temporarily unavailable. Please try again later.";
+        } else if (typeof data === "string") {
             message = data;
         } else if (data?.detail) {
             message = data.detail;
@@ -238,9 +317,18 @@ window.schoolUtils = {
             message = data.error;
         } else if (data?.non_field_errors) {
             message = data.non_field_errors.join(", ");
+        } else if (error.code === 'NETWORK_ERROR' || error.code === 'ECONNREFUSED') {
+            message = environment === 'development' 
+                ? "Cannot connect to backend. Make sure Django server is running on localhost:8000"
+                : "Cannot connect to server. Please check your internet connection.";
         }
 
-        console.error("❌ API Error:", { status, message, url: error.config?.url });
+        console.error(`❌ [${environment.toUpperCase()}] API Error:`, { 
+            status, 
+            message, 
+            url: error.config?.url,
+            error: error.message 
+        });
         
         if (status === 401) {
             this.showAlert("Session expired. Please login again.", "error");
@@ -248,13 +336,34 @@ window.schoolUtils = {
             setTimeout(() => this.redirectToLogin(), 2000);
         } else if (status === 403) {
             this.showAlert("You don't have permission to perform this action.", "error");
-        } else if (status === 404) {
-            this.showAlert("Resource not found. Please check if you're accessing the correct school.", "error");
         } else if (status >= 500) {
             this.showAlert("Server error. Please try again later.", "error");
         } else {
             this.showAlert(message, "error");
         }
+    },
+
+    // ==================== DEBUG HELPERS ====================
+    debugEnvironment() {
+        console.group('🔧 Environment Debug Info');
+        console.log('🌐 Frontend URL:', window.location.href);
+        console.log('🚀 Backend API Base:', this.getAPI_BASE());
+        console.log('🏷️ Environment:', this.getEnvironment());
+        console.log('🔑 Authenticated:', this.isAuthenticated());
+        console.log('👤 User Type:', this.getUserType());
+        console.log('🏫 Tenant Data:', this.getTenantData());
+        console.groupEnd();
+    },
+
+    testBackendConnection() {
+        console.log('🔍 Testing backend connection...');
+        this.apiGet('/health/')
+            .then(response => {
+                console.log('✅ Backend connection successful:', response.data);
+            })
+            .catch(error => {
+                console.error('❌ Backend connection failed:', error.message);
+            });
     },
 
     // ==================== DATE HELPERS ====================
@@ -296,26 +405,14 @@ if (typeof axios !== "undefined") {
     };
     
     window.schoolUtils.initializeAxiosInterceptors();
-    console.log("🎯 schoolUtils initialized - Multi-tenant ready!");
-}
-
-
-// ✅ Initialize interceptors once Axios is confirmed loaded
-if (typeof axios !== "undefined") {
-    window.schoolUtils.initializeAxiosInterceptors = function() {
-        axios.interceptors.response.use(
-            response => response,
-            error => {
-                if (error.response?.status === 401) {
-                    this.showAlert("Session expired. Please login again.", "error");
-                    this.clearAuthData();
-                    setTimeout(() => this.redirectToLogin(), 2000);
-                }
-                return Promise.reject(error);
-            }
-        );
-    };
     
-    window.schoolUtils.initializeAxiosInterceptors();
-    console.log("🎯 schoolUtils initialized with domain switching");
+    // Auto-detect and log environment on load
+    setTimeout(() => {
+        const environment = window.schoolUtils.getEnvironment();
+        const apiBase = window.schoolUtils.getAPI_BASE();
+        console.log(`🎯 schoolUtils initialized - Environment: ${environment}, API: ${apiBase}`);
+        
+        // Optional: Test backend connection on load
+        // window.schoolUtils.testBackendConnection();
+    }, 100);
 }
