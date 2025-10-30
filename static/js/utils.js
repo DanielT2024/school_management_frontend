@@ -5,37 +5,26 @@ if (typeof axios === "undefined") {
 
 /**
  * Global school utilities for API interaction and common helpers.
- * Automatically switches between local and production backend.
+ * Automatically switches between public and tenant domains.
+ */
+
+/**
+ * Global school utilities for API interaction and common helpers.
+ * Simplified for separate frontend/backend architecture.
  */
 window.schoolUtils = {
-    // ==================== BASE CONFIG ====================
-    API_BASE:
-        // ✅ Runtime detection first
-        window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1"
-            ? "http://127.0.0.1:8000"
-            : (window.location.origin.includes("vercel.app") ||
-               window.location.origin.includes("yourdomain.com"))
-                ? "https://schoolmanagement-production-1246.up.railway.app"
-                : (typeof process !== "undefined" &&
-                   process.env &&
-                   process.env.NEXT_PUBLIC_API_URL)
-                    ? process.env.NEXT_PUBLIC_API_URL
-                    : "https://schoolmanagement-production-1246.up.railway.app",
+    // ==================== SIMPLE API BASE ====================
+    getAPI_BASE() {
+        // 🚨 ALWAYS use Django backend - no domain switching needed
+        return "http://127.0.0.1:8000";
+    },
 
-    initializeAxiosInterceptors() {
-        axios.interceptors.response.use(
-            response => response,
-            error => {
-                if (error.response?.status === 401) {
-                    this.showAlert("Session expired. Please login again.", "error");
-                    this.clearAuthData();
-                    setTimeout(() => this.redirectToLogin(), 2000);
-                }
-                return Promise.reject(error);
-            }
-        );
-    },  
-    
+    // ==================== REMOVE DOMAIN MANAGEMENT ====================
+    // Delete all these methods:
+    // - isTenantDomain()
+    // - shouldRedirectToTenant() 
+    // - redirectToTenantDomain()
+    // - ensureTenantDomain()
 
     // ==================== AUTH HELPERS ====================
     getToken() {
@@ -55,13 +44,8 @@ window.schoolUtils = {
     },
 
     logout() {
-        try {
-            // Optional: Add logout API call
-        } catch (error) {
-            console.warn('Error during logout:', error);
-        }
         this.clearAuthData();
-        window.location.href = "/login.html";
+        window.location.href = "/login.html"; // Stay on frontend domain
     },
 
     clearAuthData() {
@@ -81,10 +65,9 @@ window.schoolUtils = {
         }
     },
 
-    getTenantId() {
+    getTenantData() {
         try {
-            const tenantData = JSON.parse(localStorage.getItem("tenantData"));
-            return tenantData?.id || tenantData?.tenant_id || null;
+            return JSON.parse(localStorage.getItem("tenantData") || "null");
         } catch {
             return null;
         }
@@ -187,7 +170,7 @@ window.schoolUtils = {
     },
 
     // ==================== API HELPERS ====================
-    getAuthHeaders(endpoint = '') {
+    getAuthHeaders() {
         const headers = {
             "Content-Type": "application/json",
             "X-Requested-With": "XMLHttpRequest"
@@ -195,32 +178,20 @@ window.schoolUtils = {
         const token = this.getToken();
         if (token) headers["Authorization"] = `Token ${token}`;
 
-        if (endpoint !== '/api/auth/login/') {
-            try {
-                const tenantRaw = localStorage.getItem("tenantData");
-                if (tenantRaw) {
-                    const tenant = JSON.parse(tenantRaw);
-                    if (tenant?.schema_name) {
-                        headers["X-Tenant-Schema"] = tenant.schema_name;
-                    } else {
-                        console.warn("⚠️ No schema_name in tenantData:", tenant);
-                    }
-                } else {
-                    console.warn("⚠️ No tenantData in localStorage");
-                }
-            } catch (e) {
-                console.warn("⚠️ Failed to parse tenantData:", e);
-            }
-        }
+        // 🚨 Tenant schema is handled by backend - no need for X-Tenant-Schema header
+        // Your backend already knows the tenant from the user's association
 
-        console.log("🔐 Sending headers for", endpoint, ":", headers);
         return headers;
     },
 
     async apiGet(endpoint) {
         try {
-            const res = await axios.get(`${this.API_BASE}${endpoint}`, {
-                headers: this.getAuthHeaders(endpoint),
+            const apiBase = this.getAPI_BASE();
+            const url = `${apiBase}${endpoint}`;
+            
+            console.log(`🌐 API GET: ${url}`);
+            const res = await axios.get(url, {
+                headers: this.getAuthHeaders(),
                 timeout: 10000,
             });
             console.log("✅ GET", endpoint, res.data);
@@ -234,8 +205,12 @@ window.schoolUtils = {
 
     async apiPost(endpoint, data) {
         try {
-            const res = await axios.post(`${this.API_BASE}${endpoint}`, data, {
-                headers: this.getAuthHeaders(endpoint),
+            const apiBase = this.getAPI_BASE();
+            const url = `${apiBase}${endpoint}`;
+            
+            console.log(`🌐 API POST: ${url}`);
+            const res = await axios.post(url, data, {
+                headers: this.getAuthHeaders(),
                 timeout: 10000,
             });
             console.log("✅ POST", endpoint, res.data);
@@ -247,63 +222,34 @@ window.schoolUtils = {
         }
     },
 
-    async apiPut(endpoint, data) {
-        try {
-            const res = await axios.put(`${this.API_BASE}${endpoint}`, data, {
-                headers: this.getAuthHeaders(endpoint),
-                timeout: 10000,
-            });
-            console.log("✅ PUT", endpoint, res.data);
-            return res;
-        } catch (err) {
-            console.error("❌ PUT Failed:", endpoint, err.response || err);
-            this.handleApiError(err);
-            throw err;
-        }
-    },
-
-    async apiDelete(endpoint) {
-        try {
-            const res = await axios.delete(`${this.API_BASE}${endpoint}`, {
-                headers: this.getAuthHeaders(endpoint),
-                timeout: 10000,
-            });
-            console.log("✅ DELETE", endpoint, res.data);
-            return res;
-        } catch (err) {
-            console.error("❌ DELETE Failed:", endpoint, err.response || err);
-            this.handleApiError(err);
-            throw err;
-        }
-    },
-
-    // ==================== ERROR HANDLER ====================
+    // ==================== SIMPLIFIED ERROR HANDLER ====================
     handleApiError(error) {
         const status = error.response?.status;
         const data = error.response?.data;
         let message = error.message || "An unexpected error occurred.";
 
-        if (typeof data === "string" && data.includes('<!DOCTYPE html>')) {
-            message = `Resource not found at ${error.config?.url || 'unknown endpoint'}`;
-        } else if (typeof data === "string") {
+        if (typeof data === "string") {
             message = data;
         } else if (data?.detail) {
             message = data.detail;
         } else if (data?.message) {
             message = data.message;
+        } else if (data?.error) {
+            message = data.error;
         } else if (data?.non_field_errors) {
             message = data.non_field_errors.join(", ");
         }
 
-        console.error("❌ API Error:", { status, data, message, url: error.config?.url });
+        console.error("❌ API Error:", { status, message, url: error.config?.url });
+        
         if (status === 401) {
             this.showAlert("Session expired. Please login again.", "error");
             this.clearAuthData();
             setTimeout(() => this.redirectToLogin(), 2000);
         } else if (status === 403) {
-            this.showAlert("You don’t have permission to perform this action.", "error");
+            this.showAlert("You don't have permission to perform this action.", "error");
         } else if (status === 404) {
-            this.showAlert(`Requested resource not found: ${error.config?.url || 'unknown'}`, "error");
+            this.showAlert("Resource not found. Please check if you're accessing the correct school.", "error");
         } else if (status >= 500) {
             this.showAlert("Server error. Please try again later.", "error");
         } else {
@@ -333,8 +279,43 @@ window.schoolUtils = {
     },
 };
 
+// ✅ Initialize interceptors
+if (typeof axios !== "undefined") {
+    window.schoolUtils.initializeAxiosInterceptors = function() {
+        axios.interceptors.response.use(
+            response => response,
+            error => {
+                if (error.response?.status === 401) {
+                    this.showAlert("Session expired. Please login again.", "error");
+                    this.clearAuthData();
+                    setTimeout(() => this.redirectToLogin(), 2000);
+                }
+                return Promise.reject(error);
+            }
+        );
+    };
+    
+    window.schoolUtils.initializeAxiosInterceptors();
+    console.log("🎯 schoolUtils initialized - Multi-tenant ready!");
+}
+
+
 // ✅ Initialize interceptors once Axios is confirmed loaded
 if (typeof axios !== "undefined") {
+    window.schoolUtils.initializeAxiosInterceptors = function() {
+        axios.interceptors.response.use(
+            response => response,
+            error => {
+                if (error.response?.status === 401) {
+                    this.showAlert("Session expired. Please login again.", "error");
+                    this.clearAuthData();
+                    setTimeout(() => this.redirectToLogin(), 2000);
+                }
+                return Promise.reject(error);
+            }
+        );
+    };
+    
     window.schoolUtils.initializeAxiosInterceptors();
-    console.log("🎯 schoolUtils initialized and globally available");
+    console.log("🎯 schoolUtils initialized with domain switching");
 }

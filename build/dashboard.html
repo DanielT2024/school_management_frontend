@@ -411,6 +411,15 @@
     
 
     
+<script>
+    // Add this at the top of your dashboard.html script
+    document.addEventListener('DOMContentLoaded', function() {
+ 
+    // Continue with your existing dashboard initialization
+    window.dashboardManager = new DashboardManager();
+    window.dashboardManager.initialize();
+});
+</script>
 <script src="../static/js/utils.js"></script>
 <script src="../static/js/dashboard.js"></script>
 

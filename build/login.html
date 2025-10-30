@@ -28,6 +28,19 @@
                     </div>
 
                     <form id="loginForm">
+                        <!-- 🏫 School selector -->
+                        <div class="mb-3">
+                            <label for="schoolSelect" class="form-label">Select Your School</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="fas fa-school"></i>
+                                </span>
+                                <select id="schoolSelect" class="form-select" required>
+                                    <option value="">Loading schools...</option>
+                                </select>
+                            </div>
+                        </div>
+
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
                             <div class="input-group">
@@ -83,9 +96,8 @@
 
     
 <script src="../static/js/utils.js"></script>
-
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     console.log('🔐 Login page loaded');
 
     if (!window.schoolUtils) {
@@ -101,74 +113,124 @@ document.addEventListener('DOMContentLoaded', function() {
         const redirectUrl = userData.user_type === 'super_admin' ? '/super-admin-dashboard.html' : '/dashboard.html';
         window.location.href = redirectUrl;
         return;
-    } else {
-        console.log('🔐 User not authenticated, staying on login page');
     }
 
-    // Handle login submission
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
-        e.preventDefault();
-
-        const email = document.getElementById('email').value.trim();
-        const password = document.getElementById('password').value.trim();
-
-        // Basic input validation
-        if (!email || !password) {
-            schoolUtils.showAlert('Please enter both email and password.', 'warning');
-            return;
-        }
-        if (!schoolUtils.validateEmail(email)) {
-            schoolUtils.showAlert('Please enter a valid email address.', 'warning');
-            return;
-        }
-        if (password.length < 6) {
-            schoolUtils.showAlert('Password must be at least 6 characters long.', 'warning');
-            return;
-        }
-
-        const submitBtn = this.querySelector('button[type="submit"]');
-        submitBtn.disabled = true;
-        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Signing In...';
-
-        try {
-            console.log('🔐 Attempting login for:', email);
-
-            // Use schoolUtils.apiPost for consistency
-            const response = await schoolUtils.apiPost('/api/auth/login/', {
-                email: email,
-                password: password
+    // 🏫 Load schools (tenants)
+    const schoolSelect = document.getElementById('schoolSelect');
+    try {
+        console.log('📡 Fetching schools from backend...');
+        const res = await axios.get(`${schoolUtils.API_BASE}/api/auth/tenants/`);
+        console.log('🏫 Schools API response:', res.data);
+        
+        if (res.data && res.data.length > 0) {
+            schoolSelect.innerHTML = '<option value="">Select your school</option>';
+            res.data.forEach(school => {
+                const option = document.createElement('option');
+                option.value = school.schema_name;  // This is what backend expects
+                option.textContent = school.school_name || school.name || school.schema_name;
+                schoolSelect.appendChild(option);
             });
-
-            console.log('✅ Login successful:', response.data);
-
-            const { token, user, tenant } = response.data;
-            localStorage.setItem('authToken', token);
-            localStorage.setItem('userData', JSON.stringify(user));
-            if (tenant) {
-                localStorage.setItem('tenantData', JSON.stringify(tenant));
-            } else {
-                localStorage.removeItem('tenantData'); // Clear tenantData if not provided
-            }
-
-            schoolUtils.showAlert('Login successful! Redirecting...', 'success');
-
-            // Redirect based on user type
-            const redirectUrl = user.user_type === 'super_admin' ? '/super-admin-dashboard.html' : '/dashboard.html';
-            setTimeout(() => {
-                window.location.href = redirectUrl;
-            }, 1000);
-
-        } catch (error) {
-            console.error('❌ Login error:', error);
-            // Error is already handled by schoolUtils.handleApiError
-        } finally {
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Sign In';
+            console.log(`✅ Loaded ${res.data.length} schools`);
+        } else {
+            schoolSelect.innerHTML = '<option value="">No schools available</option>';
+            console.warn('⚠️ No schools found in API response');
         }
-    });
+    } catch (err) {
+        console.error('❌ Failed to load schools:', err);
+        schoolSelect.innerHTML = '<option value="">Failed to load schools</option>';
+        schoolUtils.showAlert('Could not load schools. Please refresh the page.', 'error');
+    }
+
+    // 🧠 Handle login submission
+   // 🧠 Handle login submission
+document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value.trim();
+    const schoolSchema = schoolSelect.value.trim();
+
+    console.log('🔐 Login attempt:', { email, schoolSchema });
+
+    if (!schoolSchema) {
+        schoolUtils.showAlert('Please select your school.', 'warning');
+        return;
+    }
+    if (!email || !password) {
+        schoolUtils.showAlert('Please enter both email and password.', 'warning');
+        return;
+    }
+    if (!schoolUtils.validateEmail(email)) {
+        schoolUtils.showAlert('Please enter a valid email address.', 'warning');
+        return;
+    }
+
+    const submitBtn = this.querySelector('button[type="submit"]');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Signing In...';
+
+    try {
+        console.log('🔐 Attempting login...');
+        
+        const response = await schoolUtils.apiPost('/api/auth/login/', {
+            school: schoolSchema,
+            username: email,
+            password: password
+        });
+
+        console.log('✅ Login successful:', response.data);
+        
+        const { token, user, tenant } = response.data;
+        localStorage.setItem('authToken', token);
+        localStorage.setItem('userData', JSON.stringify(user));
+        if (tenant) {
+            localStorage.setItem('tenantData', JSON.stringify(tenant));
+        }
+
+        console.log('🏫 Multi-tenant login successful - Schema:', tenant.schema_name);
+        schoolUtils.showAlert(`Welcome to ${tenant.school_name}!`, 'success');
+        
+        // 🚨 SIMPLE REDIRECT - Stay on frontend domain
+        setTimeout(() => {
+            const redirectUrl = user.user_type === 'super_admin' 
+                ? '/super-admin-dashboard.html' 
+                : '/dashboard.html';
+            console.log(`🔄 Redirecting to: ${redirectUrl}`);
+            window.location.href = redirectUrl;
+        }, 1000);
+
+    } catch (error) {
+        console.error('❌ Login error:', error);
+        
+        // Show specific error messages
+        if (error.response?.data?.error) {
+            schoolUtils.showAlert(error.response.data.error, 'error');
+        } else if (error.response?.data?.details) {
+            schoolUtils.showAlert(error.response.data.details, 'error');
+        } else {
+            schoolUtils.showAlert('Login failed. Please check your credentials.', 'error');
+        }
+    } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<i class="fas fa-sign-in-alt me-2"></i>Sign In';
+    }
+});
+
+    // Debug: Test the schools API directly
+    async function testSchoolsAPI() {
+        try {
+            const testResponse = await fetch(`${schoolUtils.API_BASE}/api/auth/tenants/`);
+            const data = await testResponse.json();
+            console.log('🔍 Schools API test:', data);
+        } catch (err) {
+            console.error('🔍 Schools API test failed:', err);
+        }
+    }
+    
+    // Uncomment to test the API on page load
+    // testSchoolsAPI();
 });
 </script>
-
 
 </body>
 </html>

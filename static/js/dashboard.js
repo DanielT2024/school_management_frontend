@@ -1,3 +1,4 @@
+// dashboad.js
 class DashboardManager {
     constructor() {
         this.currentView = 'dashboard';
