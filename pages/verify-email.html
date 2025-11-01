@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Verify Email</title>
+</head>
+<body>
+  <h2>Verifying your email...</h2>
+  <script>
+    // Extract token from URL
+    const token = window.location.pathname.split('/').pop();
+
+    // Call your backend to verify
+    fetch(`https://schoolmanagement-production-1246.up.railway.app/api/auth/verify-email/${token}/`, {
+      method: 'GET'
+    })
+    .then(res => res.json())
+    .then(data => {
+      document.body.innerHTML = `<h2>${data.message || "Email verified successfully!"}</h2>`;
+    })
+    .catch(err => {
+      document.body.innerHTML = `<h2 style="color:red;">Verification failed: ${err}</h2>`;
+    });
+  </script>
+</body>
+</html>
