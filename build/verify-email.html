@@ -1,31 +1,65 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Verify Email</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin-top: 10%;
+      color: #333;
+    }
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #007bff;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
 </head>
 <body>
-  <h2>Verifying your email...</h2>
+  <h2 id="message">Verifying your email...</h2>
+  <div class="spinner"></div>
+
   <script>
-    const pathParts = window.location.pathname.split('/');
-    const token = pathParts[pathParts.length - 2] || window.location.search.split('token=')[1];
+    // Extract token from URL: supports both /verify-email/<token>/ and ?token=<token>
+    let token = window.location.pathname.split('/').filter(Boolean).pop();
+    if (!token || token.length < 10) {
+      token = new URLSearchParams(window.location.search).get("token");
+    }
+
+    const messageElement = document.getElementById("message");
 
     if (!token) {
-      document.body.innerHTML = `<h2 style="color:red;">No verification token found.</h2>`;
+      messageElement.textContent = "❌ No verification token found in the URL.";
     } else {
-      fetch(`https://schoolmanagement-production-1246.up.railway.app/api/auth/verify-email/`, {
+      fetch("https://schoolmanagement-production-1246.up.railway.app/api/auth/verify-email/", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token })
       })
       .then(res => res.json())
       .then(data => {
-        if (data.message)
-          document.body.innerHTML = `<h2 style="color:green;">${data.message}</h2>`;
-        else
-          document.body.innerHTML = `<h2 style="color:red;">${data.error || "Verification failed."}</h2>`;
+        if (data.message) {
+          messageElement.textContent = "✅ " + data.message;
+          document.querySelector(".spinner").style.display = "none";
+        } else {
+          messageElement.textContent = "❌ " + (data.error || "Verification failed.");
+          document.querySelector(".spinner").style.display = "none";
+        }
       })
       .catch(err => {
-        document.body.innerHTML = `<h2 style="color:red;">Verification failed: ${err}</h2>`;
+        messageElement.textContent = "❌ Verification failed: " + err;
+        document.querySelector(".spinner").style.display = "none";
       });
     }
   </script>
