@@ -1,3 +1,4 @@
+<!-- verify-email.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -31,37 +32,59 @@
   <div class="spinner"></div>
 
   <script>
-    // Extract token from URL: supports both /verify-email/<token>/ and ?token=<token>
-    let token = window.location.pathname.split('/').filter(Boolean).pop();
-    if (!token || token.length < 10) {
-      token = new URLSearchParams(window.location.search).get("token");
-    }
+  // Extract token from URL
+  let token = window.location.pathname.split('/').filter(Boolean).pop();
+  if (!token || token.length < 10) {
+    token = new URLSearchParams(window.location.search).get("token");
+  }
 
-    const messageElement = document.getElementById("message");
+  const messageElement = document.getElementById("message");
 
-    if (!token) {
-      messageElement.textContent = "❌ No verification token found in the URL.";
-    } else {
-      fetch("https://schoolmanagement-production-1246.up.railway.app/api/auth/verify-email/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token })
-      })
-      .then(res => res.json())
-      .then(data => {
-        if (data.message) {
-          messageElement.textContent = "✅ " + data.message;
-          document.querySelector(".spinner").style.display = "none";
-        } else {
-          messageElement.textContent = "❌ " + (data.error || "Verification failed.");
-          document.querySelector(".spinner").style.display = "none";
-        }
-      })
-      .catch(err => {
-        messageElement.textContent = "❌ Verification failed: " + err;
+  if (!token) {
+    messageElement.textContent = "❌ No verification token found in the URL.";
+  } else {
+    // ✅ Add CORS mode and better error handling
+    fetch("https://schoolmanagement-production-1246.up.railway.app/api/auth/verify-email/", {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ token }),
+      mode: "cors", // ✅ Explicitly enable CORS
+      credentials: "omit" // ✅ Don't send cookies
+    })
+    .then(async (res) => {
+      if (!res.ok) {
+        // Try to get error message from response
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
+    .then(data => {
+      if (data.message) {
+        messageElement.textContent = "✅ " + data.message;
+        messageElement.style.color = "green";
         document.querySelector(".spinner").style.display = "none";
-      });
-    }
-  </script>
+        
+        // ✅ Optional: Redirect to login after success
+        setTimeout(() => {
+          window.location.href = "https://school-management-frontend-two.vercel.app/login";
+        }, 3000);
+      } else {
+        messageElement.textContent = "❌ " + (data.error || "Verification failed.");
+        messageElement.style.color = "red";
+        document.querySelector(".spinner").style.display = "none";
+      }
+    })
+    .catch(err => {
+      console.error("Verification error:", err);
+      messageElement.textContent = "❌ Verification failed: " + err.message;
+      messageElement.style.color = "red";
+      document.querySelector(".spinner").style.display = "none";
+    });
+  }
+</script>
+
 </body>
 </html>
